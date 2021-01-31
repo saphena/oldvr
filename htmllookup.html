@@ -1,0 +1,20 @@
+<!-- oldvrs lookup CDRs form -->
+<div id="lookupform">
+    <form action="lookup" method="post">
+        <input type="hidden" name="offset" value="0">
+        <label for="tel">Phone number</label>
+        <input type="text" id="tel" name="tel">
+        <label for="dates">Call date</label>
+        <select id="dates" name="dates" onchange="document.getElementById('daterange').style.display=(this.value=='all'?'none':'inline');">
+            <option value="all" selected>any date</option>
+            <option value="some">between</option>
+        </select>
+        <span id="daterange" style="display:none;">
+            <label for="fromdate"></label>
+            <input type="date" id="fromdate" name="fromdate" value="" onchange="if(document.getElementById('todate').value=='')document.getElementById('todate').value=this.value;">
+            <label for="todate"> - </label>
+            <input type="date" id="todate" name="todate" value="">
+        </span>
+        <input type="submit" value="&telrec;">
+    </form>
+</div>

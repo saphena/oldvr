@@ -1,0 +1,77 @@
+@page {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+:root	{
+		--regular-background		: #e7dcda;
+		--regular-text				: black;
+		--button-background			: #f7f3f3;
+		--button-text				: lightgray;
+		--button-back-disabled		: #339966;
+		--button-text-disabled		: darkgray;
+		--bright-background			: blue;
+		--bright-text				: white;
+		--form-background			: #ccffcc;
+		--input-text				: #000;
+		--input-background			: white;
+		--hover-background			: darkgray;
+		--hover-text				: white;
+		--tabs-background			: #dedbde;
+		--tabs-text					: #42454a;
+		--via-background			: white;
+		--via-text					: black;
+		--solid-border				: #c9c3ba;
+		--header-background			: lightgray;
+		--scorex-background			: #66D2FF;
+		--rejected-background 		: red;
+		--rejected-text 			: white;
+		--checked-background 		: #31ad16;
+		--checked-text 				: white;
+		
+}
+
+body					{ 
+                            margin-left: .5em; 
+                            margin-right: .5em; 
+                            background-color: var(--regular-background);
+                            font-family: Verdana, Arial, Helvetica, sans-serif; 
+                            font-size: calc(12pt + 1vmin);  
+                        }
+
+input, select		    { 
+                            background-color: var(--input-background);
+                            color: var(--input-text);
+						}
+						
+form					{ display: inline; }						
+
+input[type=submit]      { 
+                            background-color: var(--button-background); 
+                            transition-duration: 0.4s; 
+                            border-radius: 10px; 
+                        }
+  
+input[type=submit]:hover {    
+                            background-color: var(--hover-background);   
+                            color: var(--hover-text); 
+                            border: 2px solid var(--solid-border);  
+						}
+						
+#results td				{ 	font-size: .8em; }
+.direction				{	padding: 0 1.5em 0 1.5em; font-size: .8em; text-align: center; }
+.aphone,.bphone			{	padding: 0 1em 0 1em; min-width: 5em; }
+audio::-webkit-media-controls-panel 
+						{	background-color: darkgray; height: 32px;  }
+audio 					{ 	height: 1.5em; background-color: darkgray; }
+#results tr:hover		{	background-color: var(--hover-background); color: var(--hover-text); }
+
+#private p				{	
+							max-width: 30em; 
+							margin-left: auto; margin-right: auto; 
+							margin-top: 2em;
+							padding: 2em;
+							border: 5px solid; 
+							background-color: var(--bright-background);
+							color: var(--bright-text);
+						}
