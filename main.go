@@ -153,7 +153,7 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 		todate += "T23:59:59"
 	}
 
-	var sql string = "SELECT cdrid,direction,duration,connected,ifnull(aphone,'') as aphone,ifnull(bphone,'') as bphone "
+	var sql string = "SELECT cdrid,direction,duration,connected,ifnull(aphone,'') as aphone,ifnull(bphone,'') as bphone,folderid "
 	var where string = ""
 	sql += "FROM cdrs "
 	sql += "WHERE "
@@ -196,8 +196,9 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 		var duration string
 		var connected string
 		var aphone, bphone string
-		rows.Scan(&cdrid, &direction, &duration, &connected, &aphone, &bphone)
-		var record string = "/cdr/{" + cdrid + "}.osf"
+		var folderid int
+		rows.Scan(&cdrid, &direction, &duration, &connected, &aphone, &bphone, &folderid)
+		var record string = "/cdr" + strconv.Itoa(folderid) + "/{" + cdrid + "}.osf"
 		fmt.Fprintf(w, "<tr><td class=\"duration\">%v</td>", showDuration(duration))
 		fmt.Fprintf(w, "<td class=\"connected\">%v</td>", showDatetime(connected))
 		fmt.Fprintf(w, "<td class=\"direction\">%v</td>", direction)
