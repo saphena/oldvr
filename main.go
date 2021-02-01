@@ -25,9 +25,19 @@ var (
 	pagesz   = flag.Int("pg", 15, "Pagesize for results")
 )
 
-const myversion = "v0.1"
+const myversion = "v0.2"
 
 var sqldb *sql.DB
+
+func formatCommas(num int) string {
+	str := fmt.Sprintf("%d", num)
+	re := regexp.MustCompile("(\\d+)(\\d{3})")
+	for n := ""; n != str; {
+		n = str
+		str = re.ReplaceAllString(str, "$1,$2")
+	}
+	return str
+}
 
 func fetchTemplate(template string) string {
 
@@ -100,7 +110,7 @@ func showDatetime(dt string) string {
 
 func countrows(table, where string) int {
 
-	var sql = "SELECT Count(*) As rex FROM " + table + " WHERE " + where
+	var sql = "SELECT Count(1) As rex FROM " + table + " WHERE " + where
 	var res int
 	res, _ = strconv.Atoi(getValueFromDB(sql, "rex", "-1"))
 	return res
@@ -172,7 +182,7 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	nresults := countrows("cdrs", where)
 
-	fmt.Fprintf(w, "; %v found</p>", nresults)
+	fmt.Fprintf(w, "; %v found</p>", formatCommas(nresults))
 
 	sql += where
 	sql += " LIMIT " + strconv.Itoa(offset) + ", " + strconv.Itoa(*pagesz)
@@ -243,13 +253,13 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 func startServer() {
 
 	var numrex int
-	row, err := sqldb.Query("SELECT Count(*) As rex FROM cdrs")
+	row, err := sqldb.Query("SELECT Count(1) As rex FROM cdrs")
 	if err != nil {
 		log.Fatal(err)
 	}
 	if row.Next() {
 		row.Scan(&numrex)
-		fmt.Printf("Number of CDRs: %v\n", numrex)
+		fmt.Printf("Number of CDRs: %v\n", formatCommas(numrex))
 	}
 	row.Close()
 	browser.OpenURL(*starturl + ":" + *port)
@@ -261,6 +271,7 @@ func handleFolder(folderid int, datapath string) {
 	cdrserver := http.FileServer(http.Dir(datapath))
 	cdrf := "/cdr" + strconv.Itoa(folderid) + "/"
 	http.Handle(cdrf, http.StripPrefix(cdrf, cdrserver))
+	fmt.Printf("VR%v: %v\n", folderid, datapath)
 
 }
 
@@ -282,7 +293,7 @@ func handleFolders() {
 
 func main() {
 
-	fmt.Printf("OldVRs %v\nCopyright (c) Bob Stammers 2021\n\n", myversion)
+	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2021\n\n", myversion)
 
 	flag.Parse()
 
@@ -293,6 +304,7 @@ func main() {
 	}
 	defer sqldb.Close()
 
+	fmt.Printf("CDRs: %v\n", *db3)
 	fmt.Printf("Database: %v\n", getValueFromDB("SELECT dbname FROM params", "dbname", "unidentified"))
 	fileServer := http.FileServer(http.Dir("."))
 	http.Handle("/", fileServer)
