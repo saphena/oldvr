@@ -57,7 +57,12 @@ input[type=submit]:hover {
                             color: var(--hover-text); 
                             border: 2px solid var(--solid-border);  
 						}
-						
+
+input[name=datapath]	{ 	width: 30em; }
+input[name=folderid]	{	width: 2em; }
+
+h1 a					{	text-decoration: none; color: inherit; }
+
 #results td				{ 	font-size: .8em; }
 .direction				{	padding: 0 1.5em 0 1.5em; font-size: .8em; text-align: center; }
 .aphone,.bphone			{	padding: 0 1em 0 1em; min-width: 5em; }
@@ -75,3 +80,6 @@ audio 					{ 	height: 1.5em; background-color: darkgray; }
 							background-color: var(--bright-background);
 							color: var(--bright-text);
 						}
+					
+#dbname					{ width: 20em; }
+#folderlist				{ list-style-type: none; }

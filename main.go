@@ -25,7 +25,7 @@ var (
 	pagesz   = flag.Int("pg", 15, "Pagesize for results")
 )
 
-const myversion = "v0.2"
+const myversion = "v0.3"
 
 var sqldb *sql.DB
 
@@ -291,6 +291,72 @@ func handleFolders() {
 
 }
 
+func configHandler(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	fmt.Fprintf(w, fetchTemplate("htmlhead.html"))
+
+	if err := r.ParseForm(); err == nil {
+
+		var x, y string
+		var updated bool = false
+
+		x = r.FormValue("dbname")
+		if x != "" {
+			var sql string = "UPDATE params SET dbname=?"
+			sqldb.Exec(sql, x)
+			updated = true
+		}
+		x = r.FormValue("datapath")
+		y = r.FormValue("folderid")
+		if x != "" {
+			var sql string = "UPDATE folders SET datapath=? WHERE folderid=?"
+			sqldb.Exec(sql, x, y)
+			updated = true
+		}
+
+		if updated {
+			fmt.Fprintf(w, "<h2>%v</h2>", getValueFromDB("SELECT dbname FROM params", "dbname", ""))
+			fmt.Fprintf(w, fetchTemplate("htmllookup.html"))
+			return
+		}
+	}
+
+	var dbname string = getValueFromDB("SELECT dbname FROM params", "dbname", "*unknown*")
+
+	fmt.Fprintf(w, "<h2>Database configuration</h2>")
+
+	fmt.Fprintf(w, "<div id=\"dbconfig\">")
+	fmt.Fprintf(w, "<form action=\"config\" method=\"post\">")
+	fmt.Fprintf(w, "<label for=\"dbname\">DB description: </label>")
+	fmt.Fprintf(w, "<input type=\"text\" id=\"dbname\" name=\"dbname\" value=\"%v\">", dbname)
+
+	row, err := sqldb.Query("SELECT folderid,datapath FROM folders ORDER BY folderid")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer row.Close()
+
+	fmt.Fprintf(w, "<p>Folders containing voice recordings</p>")
+
+	fmt.Fprintf(w, "<ul id=\"folderlist\">")
+	for row.Next() {
+		var folderid int
+		var datapath string
+		row.Scan(&folderid, &datapath)
+		fmt.Fprintf(w, "<li><input type=\"text\" name=\"folderid\" value=\"%v\" readonly> : ", folderid)
+		fmt.Fprintf(w, "<input type=\"text\" name=\"datapath\" value=\"%v\"></li>", datapath)
+
+	}
+	fmt.Fprintf(w, "</ul>")
+
+	fmt.Fprintf(w, "<input type=\"submit\" value=\"Update\">")
+	fmt.Fprintf(w, "</form>")
+	fmt.Fprintf(w, "</div>")
+
+}
+
 func main() {
 
 	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2021\n\n", myversion)
@@ -309,6 +375,7 @@ func main() {
 	fileServer := http.FileServer(http.Dir("."))
 	http.Handle("/", fileServer)
 	http.HandleFunc("/lookup", lookupHandler)
+	http.HandleFunc("/config", configHandler)
 
 	handleFolders()
 
