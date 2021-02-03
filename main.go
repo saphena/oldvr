@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -25,7 +26,7 @@ var (
 	pagesz   = flag.Int("pg", 15, "Pagesize for results")
 )
 
-const myversion = "v0.3"
+const myversion = "v0.4"
 
 var sqldb *sql.DB
 
@@ -359,7 +360,8 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2021\n\n", myversion)
+	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2021\n", myversion)
+	fmt.Printf("Architecture: %v\n\n", runtime.GOARCH)
 
 	flag.Parse()
 
@@ -374,6 +376,7 @@ func main() {
 	fmt.Printf("Database: %v\n", getValueFromDB("SELECT dbname FROM params", "dbname", "unidentified"))
 	fileServer := http.FileServer(http.Dir("."))
 	http.Handle("/", fileServer)
+
 	http.HandleFunc("/lookup", lookupHandler)
 	http.HandleFunc("/config", configHandler)
 

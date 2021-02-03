@@ -32,11 +32,12 @@
 }
 
 body					{ 
-                            margin-left: .5em; 
-                            margin-right: .5em; 
+                            margin-left: auto; 
+                            margin-right: auto; 
                             background-color: var(--regular-background);
                             font-family: Verdana, Arial, Helvetica, sans-serif; 
                             font-size: calc(12pt + 1vmin);  
+							max-width: 1000px;
                         }
 
 input, select		    { 
@@ -61,15 +62,21 @@ input[type=submit]:hover {
 input[name=datapath]	{ 	width: 30em; }
 input[name=folderid]	{	width: 2em; }
 
+h1 						{ text-align: center; font-size: 1em; }
+h2 						{ text-align: center; font-size: .8em; }
+
+
 h1 a					{	text-decoration: none; color: inherit; }
 
 #results td				{ 	font-size: .8em; }
-.direction				{	padding: 0 1.5em 0 1.5em; font-size: .8em; text-align: center; }
-.aphone,.bphone			{	padding: 0 1em 0 1em; min-width: 5em; }
+.direction				{	padding: 0 1em 0 1em; font-size: .8em; text-align: center; }
+.aphone,.bphone			{	padding: 0 .5em 0 .2em; min-width: 5em; }
 audio::-webkit-media-controls-panel 
-						{	background-color: darkgray; height: 32px;  }
-audio 					{ 	height: 1.5em; background-color: darkgray; }
+						{	background-color: darkgray; height: 32px; }
+audio 					{ 	height: 1.5em; background-color: darkgray; width: 200px; }
 #results tr:hover		{	background-color: var(--hover-background); color: var(--hover-text); }
+#results td				{ 	white-space: nowrap; font-size: .7em; }
+#results th				{ 	white-space: nowrap; font-size: .7em; }
 
 #private p				{	
 							max-width: 30em; 
