@@ -1,7 +1,7 @@
 # OLD VOICE RECORDINGS
 
 This provides standalone access to a static collection of voice recordings from the now defunct
-BT voice recorder currently in Runcton.
+BT voice recorder originally in Runcton.
 
 I am my own web server accessing my own SQLite database and voice recordings stored in MP3 format
 on disk. Recordings themselves are separate files in \[a single\] disk folder but they're indexed
@@ -37,7 +37,7 @@ This contains one record for each data volume folder managed by the system.
 | datapath  | string   | full path        |
 
 ### Table **params**
-This contains one record for each data volume folder managed by the system.
+This contains one record.
 |   Field   |  Type    | Contents                     |
 |-----------|----------|------------------------------|
 | dbname    | string   | description of this database |

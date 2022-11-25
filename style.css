@@ -90,3 +90,5 @@ audio 					{ 	height: 1.5em; background-color: darkgray; width: 200px; }
 					
 #dbname					{ width: 20em; }
 #folderlist				{ list-style-type: none; }
+
+.copyrite				{ font-size: small; text-align: center; }

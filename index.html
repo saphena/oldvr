@@ -6,16 +6,22 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" type="text/css" href="reboot.css">
         <link rel="stylesheet" type="text/css" href="style.css">
-    </head>
+        <script>
+            function showConfig() {
+                event.preventDefault();
+                window.location.href = "config";
+            }
+        </script>
+</head>
     <body>
-        <h1>Old voice recordings</h1>
+        <h1 oncontextmenu="showConfig();"><a href="/">Old voice recordings</a></h1>
         <p>Please enter some or all of a phone number to search for</p>
 <!-- oldvrs lookup CDRs form -->
 <div id="lookupform">
     <form action="lookup" method="post">
         <input type="hidden" name="offset" value="0">
         <label for="tel">Phone number</label>
-        <input type="text" id="tel" name="tel">
+        <input type="text" id="tel" name="tel" autofocus="autofocus">
         <label for="dates">Call date</label>
         <select id="dates" name="dates" onchange="document.getElementById('daterange').style.display=(this.value=='all'?'none':'inline');">
             <option value="all" selected>any date</option>

@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -19,20 +21,19 @@ import (
 )
 
 var (
-	debug    = flag.Bool("debug", false, "enable debugging")
 	port     = flag.String("port", "80", "the HTTP port")
 	db3      = flag.String("db", "cdrs.db", "full path to db")
 	starturl = flag.String("url", "http://localhost", "starting URL")
 	pagesz   = flag.Int("pg", 15, "Pagesize for results")
 )
 
-const myversion = "v0.4"
+const myversion = "v1.0"
 
 var sqldb *sql.DB
 
 func formatCommas(num int) string {
 	str := fmt.Sprintf("%d", num)
-	re := regexp.MustCompile("(\\d+)(\\d{3})")
+	re := regexp.MustCompile(`(\d+)(\d{3})`)
 	for n := ""; n != str; {
 		n = str
 		str = re.ReplaceAllString(str, "$1,$2")
@@ -52,7 +53,7 @@ func fetchTemplate(template string) string {
 		}
 	}()
 
-	b, err := ioutil.ReadAll(file)
+	b, err := io.ReadAll(file)
 	return string(b)
 }
 
@@ -111,7 +112,10 @@ func showDatetime(dt string) string {
 
 func countrows(table, where string) int {
 
-	var sql = "SELECT Count(1) As rex FROM " + table + " WHERE " + where
+	var sql = "SELECT Count(1) As rex FROM " + table
+	if where != "" {
+		sql += " WHERE " + where
+	}
 	var res int
 	res, _ = strconv.Atoi(getValueFromDB(sql, "rex", "-1"))
 	return res
@@ -126,9 +130,9 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, fetchTemplate("htmlhead.html"))
+	fmt.Fprint(w, fetchTemplate("htmlhead.html"))
 	fmt.Fprintf(w, "<h2>%v</h2>", getValueFromDB("SELECT dbname FROM params", "dbname", ""))
-	fmt.Fprintf(w, fetchTemplate("htmllookup.html"))
+	fmt.Fprint(w, fetchTemplate("htmllookup.html"))
 
 	var tel string = r.FormValue("tel")
 	var daterange bool = r.FormValue("dates") != "all"
@@ -138,24 +142,24 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 
 	offset, _ = strconv.Atoi(r.FormValue("offset"))
 
-	fmt.Fprintf(w, "<p>Showing ")
+	fmt.Fprint(w, "<p>Showing ")
 	if tel != "" {
 		fmt.Fprintf(w, "%v", tel)
 	} else {
-		fmt.Fprintf(w, "all calls")
+		fmt.Fprint(w, "all calls")
 	}
 	if daterange {
-		fmt.Fprintf(w, "; Call date ")
+		fmt.Fprint(w, "; Call date ")
 		if fromdate == "" {
-			fmt.Fprintf(w, "upto "+showDate(todate))
+			fmt.Fprint(w, "upto "+showDate(todate))
 		} else {
-			fmt.Fprintf(w, showDate(fromdate))
+			fmt.Fprint(w, showDate(fromdate))
 			if todate != "" {
 				if todate != fromdate {
-					fmt.Fprintf(w, " - "+showDate(todate))
+					fmt.Fprint(w, " - "+showDate(todate))
 				}
 			} else {
-				fmt.Fprintf(w, " onwards")
+				fmt.Fprint(w, " onwards")
 			}
 		}
 	}
@@ -195,12 +199,12 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "OMG!!! %v", err)
 		return
 	}
-	fmt.Fprintf(w, "<table id=\"results\"><thead><tr>")
-	fmt.Fprintf(w, "<th class=\"duration\">Duration</th>")
-	fmt.Fprintf(w, "<th class=\"connected\">Connected</th>")
-	fmt.Fprintf(w, "<th class=\"direction\">I/O</th>")
-	fmt.Fprintf(w, "<th class=\"aphone\">From</th>")
-	fmt.Fprintf(w, "<th class=\"bphone\">To</th></tr></thead><tbody>")
+	fmt.Fprint(w, "<table id=\"results\"><thead><tr>")
+	fmt.Fprint(w, "<th class=\"duration\">Duration</th>")
+	fmt.Fprint(w, "<th class=\"connected\">Connected</th>")
+	fmt.Fprint(w, "<th class=\"direction\">I/O</th>")
+	fmt.Fprint(w, "<th class=\"aphone\">From</th>")
+	fmt.Fprint(w, "<th class=\"bphone\">To</th></tr></thead><tbody>")
 	for rows.Next() {
 		var cdrid string
 		var direction string
@@ -214,38 +218,38 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<td class=\"connected\">%v</td>", showDatetime(connected))
 		fmt.Fprintf(w, "<td class=\"direction\">%v</td>", direction)
 		fmt.Fprintf(w, "<td class=\"aphone\">%v</td><td class=\"bphone\">%v</td>", aphone, bphone)
-		fmt.Fprintf(w, "<td class=\"audio\"><audio controls><source src=")
+		fmt.Fprint(w, "<td class=\"audio\"><audio controls><source src=")
 		fmt.Fprintf(w, "\"%v\" type=\"audio/mpeg\"></audio></td>", record)
-		fmt.Fprintf(w, "</tr>")
+		fmt.Fprint(w, "</tr>")
 	}
-	fmt.Fprintf(w, "</tbody></table>")
+	fmt.Fprint(w, "</tbody></table>")
 
 	if offset > 0 {
-		fmt.Fprintf(w, "<form action=\"lookup\" method=\"post\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"tel\" value=\""+r.FormValue("tel")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"dates\" value=\""+r.FormValue("dates")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"fromdate\" value=\""+r.FormValue("fromdate")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"todate\" value=\""+r.FormValue("todate")+"\">")
+		fmt.Fprint(w, "<form action=\"lookup\" method=\"post\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"tel\" value=\""+r.FormValue("tel")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"dates\" value=\""+r.FormValue("dates")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"fromdate\" value=\""+r.FormValue("fromdate")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"todate\" value=\""+r.FormValue("todate")+"\">")
 		var poffset int = 0
 		if offset >= *pagesz {
 			poffset = offset - *pagesz
 		}
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"offset\" value=\""+strconv.Itoa(poffset)+"\">")
-		fmt.Fprintf(w, "<input type=\"submit\" value=\"&NestedLessLess;\"> ")
-		fmt.Fprintf(w, "</form>")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"offset\" value=\""+strconv.Itoa(poffset)+"\">")
+		fmt.Fprint(w, "<input type=\"submit\" value=\"&NestedLessLess;\"> ")
+		fmt.Fprint(w, "</form>")
 
 	}
 
 	if nresults-offset > *pagesz {
-		fmt.Fprintf(w, "<form action=\"lookup\" method=\"post\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"tel\" value=\""+r.FormValue("tel")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"dates\" value=\""+r.FormValue("dates")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"fromdate\" value=\""+r.FormValue("fromdate")+"\">")
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"todate\" value=\""+r.FormValue("todate")+"\">")
+		fmt.Fprint(w, "<form action=\"lookup\" method=\"post\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"tel\" value=\""+r.FormValue("tel")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"dates\" value=\""+r.FormValue("dates")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"fromdate\" value=\""+r.FormValue("fromdate")+"\">")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"todate\" value=\""+r.FormValue("todate")+"\">")
 		var poffset int = offset + *pagesz
-		fmt.Fprintf(w, "<input type=\"hidden\" name=\"offset\" value=\""+strconv.Itoa(poffset)+"\">")
-		fmt.Fprintf(w, "<input type=\"submit\" value=\"&NestedGreaterGreater;\"> ")
-		fmt.Fprintf(w, "</form>")
+		fmt.Fprint(w, "<input type=\"hidden\" name=\"offset\" value=\""+strconv.Itoa(poffset)+"\">")
+		fmt.Fprint(w, "<input type=\"submit\" value=\"&NestedGreaterGreater;\"> ")
+		fmt.Fprint(w, "</form>")
 
 	}
 
@@ -253,16 +257,8 @@ func lookupHandler(w http.ResponseWriter, r *http.Request) {
 
 func startServer() {
 
-	var numrex int
-	row, err := sqldb.Query("SELECT Count(1) As rex FROM cdrs")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if row.Next() {
-		row.Scan(&numrex)
-		fmt.Printf("Number of CDRs: %v\n", formatCommas(numrex))
-	}
-	row.Close()
+	numrex := countrows("cdrs", "")
+	fmt.Printf("Number of CDRs: %v\n", formatCommas(numrex))
 	browser.OpenURL(*starturl + ":" + *port)
 
 }
@@ -272,7 +268,7 @@ func handleFolder(folderid int, datapath string) {
 	cdrserver := http.FileServer(http.Dir(datapath))
 	cdrf := "/cdr" + strconv.Itoa(folderid) + "/"
 	http.Handle(cdrf, http.StripPrefix(cdrf, cdrserver))
-	fmt.Printf("VR%v: %v\n", folderid, datapath)
+	fmt.Printf("Voice Recordings folder [%v] - %v\n", folderid, datapath)
 
 }
 
@@ -296,7 +292,7 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	fmt.Fprintf(w, fetchTemplate("htmlhead.html"))
+	fmt.Fprint(w, fetchTemplate("htmlhead.html"))
 
 	if err := r.ParseForm(); err == nil {
 
@@ -319,18 +315,24 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 
 		if updated {
 			fmt.Fprintf(w, "<h2>%v</h2>", getValueFromDB("SELECT dbname FROM params", "dbname", ""))
-			fmt.Fprintf(w, fetchTemplate("htmllookup.html"))
+			fmt.Fprint(w, fetchTemplate("htmllookup.html"))
 			return
 		}
 	}
 
 	var dbname string = getValueFromDB("SELECT dbname FROM params", "dbname", "*unknown*")
 
-	fmt.Fprintf(w, "<h2>Database configuration</h2>")
+	fmt.Fprint(w, "<h2>Database configuration</h2>")
 
-	fmt.Fprintf(w, "<div id=\"dbconfig\">")
-	fmt.Fprintf(w, "<form action=\"config\" method=\"post\">")
-	fmt.Fprintf(w, "<label for=\"dbname\">DB description: </label>")
+	fmt.Fprint(w, "<div id=\"dbconfig\">")
+	fmt.Fprintf(w, "<p class=\"copyrite\">OldVRs %v\nCopyright (c) Bob Stammers 2022", myversion)
+	fmt.Fprint(w, "  (<a href=\"https://github.com/saphena/oldvr\" target=\"_blank\">https://github.com/saphena/oldvr</a>)</p>")
+	host, _ := os.Hostname()
+	dir, _ := os.Getwd()
+	dir, _ = filepath.Abs(dir)
+	fmt.Fprintf(w, "<p>Running on <strong>%v</strong> in <strong>%v</strong></p>", host, dir)
+	fmt.Fprint(w, "<form action=\"config\" method=\"post\">")
+	fmt.Fprint(w, "<label for=\"dbname\">DB description: </label>")
 	fmt.Fprintf(w, "<input type=\"text\" id=\"dbname\" name=\"dbname\" value=\"%v\">", dbname)
 
 	row, err := sqldb.Query("SELECT folderid,datapath FROM folders ORDER BY folderid")
@@ -339,9 +341,9 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer row.Close()
 
-	fmt.Fprintf(w, "<p>Folders containing voice recordings</p>")
+	fmt.Fprint(w, "<p>Folders containing voice recordings</p>")
 
-	fmt.Fprintf(w, "<ul id=\"folderlist\">")
+	fmt.Fprint(w, "<ul id=\"folderlist\">")
 	for row.Next() {
 		var folderid int
 		var datapath string
@@ -350,22 +352,27 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<input type=\"text\" name=\"datapath\" value=\"%v\"></li>", datapath)
 
 	}
-	fmt.Fprintf(w, "</ul>")
+	fmt.Fprint(w, "</ul>")
 
-	fmt.Fprintf(w, "<input type=\"submit\" value=\"Update\">")
-	fmt.Fprintf(w, "</form>")
-	fmt.Fprintf(w, "</div>")
+	fmt.Fprint(w, "<input type=\"submit\" value=\"Update\">")
+	fmt.Fprint(w, "</form>")
+	fmt.Fprint(w, "</div>")
 
 }
 
 func main() {
 
-	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2021\n", myversion)
+	fmt.Printf("\nOldVRs %v\nCopyright (c) Bob Stammers 2022\n", myversion)
 	fmt.Printf("Architecture: %v\n\n", runtime.GOARCH)
 
 	flag.Parse()
 
 	var err error
+
+	if _, err = os.Stat(*db3); errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("Cannot access database %v [%v] run aborted\n", *db3, err)
+		os.Exit(1)
+	}
 	sqldb, err = sql.Open("sqlite3", *db3)
 	if err != nil {
 		log.Fatal(err)
@@ -379,12 +386,13 @@ func main() {
 
 	http.HandleFunc("/lookup", lookupHandler)
 	http.HandleFunc("/config", configHandler)
+	http.HandleFunc("/about", configHandler)
 
 	handleFolders()
 
 	go startServer()
 
-	fmt.Printf("Serving port " + *port + "\n")
+	fmt.Print("Serving port " + *port + "\n")
 	if err := http.ListenAndServe(":"+*port, nil); err != nil {
 		log.Fatal(err)
 	}

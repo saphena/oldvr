@@ -3,7 +3,7 @@
     <form action="lookup" method="post">
         <input type="hidden" name="offset" value="0">
         <label for="tel">Phone number</label>
-        <input type="text" id="tel" name="tel">
+        <input type="text" id="tel" name="tel" autofocus="autofocus">
         <label for="dates">Call date</label>
         <select id="dates" name="dates" onchange="document.getElementById('daterange').style.display=(this.value=='all'?'none':'inline');">
             <option value="all" selected>any date</option>
